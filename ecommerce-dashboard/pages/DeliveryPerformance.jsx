@@ -28,15 +28,46 @@ export default function DeliveryPerformance({ orders }) {
   const lateNegRate = lateNeg.length ? (lateNeg.filter((o) => o.reviewScore <= 2).length / lateNeg.length) * 100 : 0
   const riskMultiple = onTimeNegRate > 0.5 ? Math.min(15, lateNegRate / onTimeNegRate) : null
 
+  const onTimeCount = filtered.filter((o) => o.deliveryStatus === 'on_time').length
+  const lateCount = filtered.filter((o) => o.deliveryStatus === 'late').length
+  const avgDeliveryDaysOnTime = onTimeNeg.length ? onTimeNeg.reduce((s, o) => s + o.deliveryDays, 0) / onTimeNeg.length : 0
+  const avgDelayDaysLate = lateNeg.length ? lateNeg.reduce((s, o) => s + o.deliveryDays, 0) / lateNeg.length : 0
+
   return (
     <div>
       <TopBar title="Delivery Performance" subtitle="Deep dive into delivery performance and its impact on customer satisfaction" />
 
       <div className="kpi-grid-4">
-        <KpiCard label="Total orders" value={totals.totalOrders} format={(v) => Math.round(v).toLocaleString('pt-BR')} />
-        <KpiCard label="On-time delivery rate" value={totals.onTimeRate} format={(v) => `${v.toFixed(1)}%`} />
-        <KpiCard label="Late delivery rate" value={totals.lateRate} format={(v) => `${v.toFixed(1)}%`} />
-        <KpiCard label="Negative review risk" value={riskMultiple ?? 0} format={(v) => (riskMultiple === null ? 'n/a' : `${v.toFixed(1)}x higher`)} />
+        <KpiCard
+          label="Total orders"
+          value={totals.totalOrders}
+          format={(v) => Math.round(v).toLocaleString('pt-BR')}
+          sub={[
+            { label: 'On-time orders', value: onTimeCount.toLocaleString('pt-BR') },
+            { label: 'Late orders', value: lateCount.toLocaleString('pt-BR') },
+          ]}
+        />
+        <KpiCard
+          label="On-time delivery rate"
+          value={totals.onTimeRate}
+          format={(v) => `${v.toFixed(1)}%`}
+          sub={[{ label: 'Avg delivery days', value: avgDeliveryDaysOnTime.toFixed(1) + 'd' }]}
+        />
+        <KpiCard
+          label="Late delivery rate"
+          value={totals.lateRate}
+          format={(v) => `${v.toFixed(1)}%`}
+          sub={[{ label: 'Avg delay days', value: avgDelayDaysLate.toFixed(1) + 'd' }]}
+        />
+        <KpiCard
+          label="Negative review risk"
+          value={riskMultiple ?? 0}
+          format={(v) => (riskMultiple === null ? 'n/a' : `${v.toFixed(1)}x higher`)}
+          sub={[
+            { label: 'On-time rate', value: `${onTimeNegRate.toFixed(1)}%` },
+            { label: 'Late rate', value: `${lateNegRate.toFixed(1)}%` },
+          ]}
+        />
       </div>
 
       <div className="grid-2-1">
