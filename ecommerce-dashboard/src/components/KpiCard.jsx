@@ -24,7 +24,7 @@ function useCountUp(target, duration = 500) {
   return value
 }
 
-export default function KpiCard({ label, value, format, delta, deltaGood = true }) {
+export default function KpiCard({ label, value, format, delta, deltaGood = true, sub }) {
   const animated = useCountUp(value)
 
   return (
@@ -34,6 +34,16 @@ export default function KpiCard({ label, value, format, delta, deltaGood = true 
       {delta !== undefined && (
         <div className={`kpi-delta ${delta >= 0 === deltaGood ? 'up' : 'down'}`}>
           {delta >= 0 ? '▲' : '▼'} {Math.abs(delta).toFixed(1)}% vs. prior filter
+        </div>
+      )}
+      {sub && (
+        <div className="kpi-sub">
+          {sub.map((s) => (
+            <div className="kpi-sub-item" key={s.label}>
+              <div className="kpi-sub-label">{s.label}</div>
+              <div className="kpi-sub-value">{s.value}</div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -67,6 +77,16 @@ export default function KpiCard({ label, value, format, delta, deltaGood = true 
         }
         .kpi-delta.up { color: var(--positive); }
         .kpi-delta.down { color: var(--negative); }
+        .kpi-sub {
+          display: flex;
+          gap: 16px;
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid var(--line);
+        }
+        .kpi-sub-item { flex: 1; min-width: 0; }
+        .kpi-sub-label { font-size: 10.5px; color: var(--ink-soft); margin-bottom: 3px; }
+        .kpi-sub-value { font-size: 13px; font-family: var(--font-mono); color: var(--navy); font-weight: 500; }
       `}</style>
     </div>
   )
