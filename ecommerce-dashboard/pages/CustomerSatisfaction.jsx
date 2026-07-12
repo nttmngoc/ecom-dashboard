@@ -7,8 +7,20 @@ import { applyFilters, byMonth, reviewDistribution, byDeliveryOutcome, byCategor
 import { useFilters } from '../context/FilterContext.jsx'
 import TopBar from '../components/TopBar.jsx'
 import { Panel, RankList } from '../components/Panel.jsx'
+import BrazilMap from '../components/BrazilMap.jsx'
 
 const SCORE_COLORS = { 1: '#d64545', 2: '#f2a65a', 3: '#e8c547', 4: '#8bc98a', 5: '#1c9c6e' }
+
+const SATISFACTION_BUCKETS = [
+  { label: '< 3.5', max: 3.5, color: '#e0693f' },
+  { label: '3.5 – 3.9', max: 3.9, color: '#f2b183' },
+  { label: '3.9 – 4.1', max: 4.1, color: '#dcdde2' },
+  { label: '4.1 – 4.5', max: 4.5, color: '#a8d3a0' },
+  { label: '≥ 4.5', max: 5.01, color: '#4b9e5f' },
+]
+function satisfactionColor(value) {
+  return (SATISFACTION_BUCKETS.find((b) => value < b.max) || SATISFACTION_BUCKETS[SATISFACTION_BUCKETS.length - 1]).color
+}
 
 export default function CustomerSatisfaction({ orders }) {
   const filters = useFilters()
@@ -27,6 +39,10 @@ export default function CustomerSatisfaction({ orders }) {
   const stateScores = useMemo(() => byState(filtered, STATES).filter((s) => s.orders >= 10), [filtered])
   const lowestStates = useMemo(() => [...stateScores].sort((a, b) => a.avgReview - b.avgReview).slice(0, 5), [stateScores])
   const highestStates = useMemo(() => [...stateScores].sort((a, b) => b.avgReview - a.avgReview).slice(0, 5), [stateScores])
+  const stateReviewMap = useMemo(
+    () => Object.fromEntries(stateScores.map((s) => [s.state, s.avgReview])),
+    [stateScores]
+  )
 
   const negPct = filtered.length ? ((dist[0].count + dist[1].count) / filtered.length) * 100 : 0
 
@@ -94,14 +110,33 @@ export default function CustomerSatisfaction({ orders }) {
         </Panel>
       </div>
 
-      <div className="grid-2">
-        <Panel title="Lowest 5 states by review score" subtitle="Dissatisfaction concentrated in North and Northeast">
-          <RankList items={lowestStates} labelKey="state" valueKey="avgReview" format={(v) => v.toFixed(2)} max={5} color="#f2a65a" />
-        </Panel>
-        <Panel title="Highest 5 states by review score">
-          <RankList items={highestStates} labelKey="state" valueKey="avgReview" format={(v) => v.toFixed(2)} max={5} color="#1c9c6e" />
-        </Panel>
-      </div>
+      <Panel title="Geographic satisfaction landscape" subtitle="Dissatisfaction is concentrated in the North and Northeast regions">
+        <div className="geo-row">
+          <div className="geo-map">
+            <BrazilMap
+              valueByState={stateReviewMap}
+              colorScale={satisfactionColor}
+              activeState={filters.state}
+              onSelect={(name) => filters.setState(filters.state === name ? '' : name)}
+            />
+          </div>
+          <div className="geo-legend">
+            <div className="geo-legend-title">Avg. review score</div>
+            {SATISFACTION_BUCKETS.map((b) => (
+              <div className="legend-row" key={b.label}>
+                <span className="legend-dot" style={{ background: b.color }} />
+                {b.label}
+              </div>
+            ))}
+          </div>
+          <div className="geo-side">
+            <div className="map-side-title">Lowest 5 states</div>
+            <RankList items={lowestStates} labelKey="state" valueKey="avgReview" format={(v) => v.toFixed(2)} max={5} color="#e0693f" />
+            <div className="map-side-title" style={{ marginTop: 16 }}>Highest 5 states</div>
+            <RankList items={highestStates} labelKey="state" valueKey="avgReview" format={(v) => v.toFixed(2)} max={5} color="#4b9e5f" />
+          </div>
+        </div>
+      </Panel>
 
       <style>{`
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -110,7 +145,16 @@ export default function CustomerSatisfaction({ orders }) {
           border-radius: 6px; margin-right: 6px; cursor: pointer; color: var(--ink-soft);
         }
         .toggle-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .geo-row { display: flex; gap: 20px; align-items: flex-start; }
+        .geo-map { flex: 1.1; min-width: 0; }
+        .geo-legend { flex: 0 0 130px; padding-top: 8px; }
+        .geo-legend-title { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 8px; }
+        .legend-row { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink); margin-bottom: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+        .geo-side { flex: 1.2; min-width: 0; }
+        .map-side-title { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; }
         @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
+        @media (max-width: 800px) { .geo-row { flex-direction: column; } }
       `}</style>
     </div>
   )
