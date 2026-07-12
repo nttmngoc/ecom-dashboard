@@ -8,8 +8,18 @@ import { useFilters } from '../context/FilterContext.jsx'
 import TopBar from '../components/TopBar.jsx'
 import KpiCard from '../components/KpiCard.jsx'
 import { Panel, RankList } from '../components/Panel.jsx'
+import BrazilMap from '../components/BrazilMap.jsx'
 
 const eur = (v) => `R$${Math.round(v).toLocaleString('pt-BR')}`
+
+function revenueColor(value, max) {
+  const t = Math.min(1, value / max)
+  // interpolate light blue -> navy
+  const from = [200, 210, 230]
+  const to = [35, 44, 71]
+  const rgb = from.map((f, i) => Math.round(f + (to[i] - f) * t))
+  return `rgb(${rgb.join(',')})`
+}
 
 export default function Overview({ orders }) {
   const filters = useFilters()
@@ -21,10 +31,13 @@ export default function Overview({ orders }) {
     () => byCategory(filtered, CATEGORIES).sort((a, b) => b.revenue - a.revenue).slice(0, 5),
     [filtered]
   )
-  const topStates = useMemo(
-    () => byState(filtered, STATES).sort((a, b) => b.revenue - a.revenue).slice(0, 5),
-    [filtered]
+  const allStatesByRevenue = useMemo(() => byState(filtered, STATES), [filtered])
+  const topStates = useMemo(() => [...allStatesByRevenue].sort((a, b) => b.revenue - a.revenue).slice(0, 5), [allStatesByRevenue])
+  const stateRevenueMap = useMemo(
+    () => Object.fromEntries(allStatesByRevenue.map((s) => [s.state, s.revenue])),
+    [allStatesByRevenue]
   )
+  const maxStateRevenue = useMemo(() => Math.max(...allStatesByRevenue.map((s) => s.revenue), 1), [allStatesByRevenue])
 
   const health = [
     { metric: 'Negative review rate', value: totals.negativeReviewRate, deltaGood: false, fmt: (v) => `${v.toFixed(1)}%`, status: totals.negativeReviewRate > 13 ? 'Monitor' : 'Good' },
@@ -82,10 +95,30 @@ export default function Overview({ orders }) {
         <Panel title="Top 5 categories by revenue" subtitle="Revenue concentration across categories">
           <RankList items={topCategories} labelKey="category" valueKey="revenue" format={eur} />
         </Panel>
-        <Panel title="Top 5 states by revenue" subtitle="Customer demand by region">
-          <RankList items={topStates} labelKey="state" valueKey="revenue" format={eur} color="var(--navy)" />
+        <Panel title="Revenue by state" subtitle="Customer demand is highly concentrated in the Southeast region">
+          <div className="map-row">
+            <div className="map-wrap">
+              <BrazilMap
+                valueByState={stateRevenueMap}
+                colorScale={(v) => revenueColor(v, maxStateRevenue)}
+                activeState={filters.state}
+                onSelect={(name) => filters.setState(filters.state === name ? '' : name)}
+              />
+            </div>
+            <div className="map-side">
+              <div className="map-side-title">Highest 5 states</div>
+              <RankList items={topStates} labelKey="state" valueKey="revenue" format={eur} color="var(--navy)" />
+            </div>
+          </div>
         </Panel>
       </div>
+
+      <style>{`
+        .map-row { display: flex; flex-direction: column; gap: 14px; }
+        .map-wrap { max-width: 260px; margin: 0 auto; }
+        .map-side { width: 100%; }
+        .map-side-title { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; }
+      `}</style>
 
       <style>{`
         .kpi-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
