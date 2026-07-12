@@ -119,6 +119,34 @@ export default function Recommendations() {
         </Panel>
       </div>
 
+      <Panel title="Potential impact scenario" subtitle="If key initiatives are successfully implemented">
+        <div className="scenario-row">
+          <div className="scenario-item">
+            <div className="scenario-value orange">~1,000</div>
+            <div className="scenario-label">Reviews recoverable</div>
+            <div className="scenario-sub">(Delivery improvement)</div>
+          </div>
+          <div className="scenario-arrow">→</div>
+          <div className="scenario-item">
+            <div className="scenario-value navy">~2,400</div>
+            <div className="scenario-label">Reviews recoverable</div>
+            <div className="scenario-sub">(Combined actions)</div>
+          </div>
+          <div className="scenario-arrow">→</div>
+          <div className="scenario-item">
+            <div className="scenario-value green">14.7% → 12.2%</div>
+            <div className="scenario-label">Dissatisfaction rate</div>
+            <div className="scenario-sub">(Platform)</div>
+          </div>
+          <div className="scenario-arrow">→</div>
+          <div className="scenario-item">
+            <div className="scenario-value navy">R$2.5M</div>
+            <div className="scenario-label">Revenue exposure</div>
+            <div className="scenario-sub">from dissatisfied orders</div>
+          </div>
+        </div>
+      </Panel>
+
       <style>{`
         .rec-header { margin-bottom: 20px; }
         .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 0 0 4px; color: var(--navy); }
@@ -142,6 +170,16 @@ export default function Recommendations() {
         .action-row ul { margin: 0 0 6px; padding-left: 16px; font-size: 12px; color: var(--ink-soft); }
         .action-row li { margin-bottom: 2px; }
         .action-impact { font-size: 12px; font-weight: 600; color: var(--positive); margin: 0; }
+        .scenario-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .scenario-item { flex: 1; min-width: 140px; text-align: center; padding: 6px 4px; }
+        .scenario-value { font-family: var(--font-mono); font-size: 22px; font-weight: 600; }
+        .scenario-value.orange { color: var(--accent); }
+        .scenario-value.navy { color: var(--navy); }
+        .scenario-value.green { color: var(--positive); }
+        .scenario-label { font-size: 12px; color: var(--ink); margin-top: 6px; font-weight: 600; }
+        .scenario-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+        .scenario-arrow { color: var(--ink-soft); font-size: 18px; flex-shrink: 0; }
+        @media (max-width: 800px) { .scenario-arrow { display: none; } }
         @media (max-width: 1000px) {
           .insight-grid { grid-template-columns: 1fr; }
           .grid-2 { grid-template-columns: 1fr; }
